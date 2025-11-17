@@ -240,19 +240,15 @@ def run_aime24_benchmark(
     problem_results = []
     total_gen_time = 0.0
 
-    # Batching configuration (smaller than GSM8K due to longer generations)
-    batch_size = 8  # Process 8 problems at a time
-
     # Create progress bar
-    total_evals = len(dataset) * num_runs
     pbar = tqdm(
-        total=total_evals,
+        total=len(dataset),
         desc="AIME Eval",
-        unit="run",
+        unit="problem",
         bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}]",
     )
 
-    # Process each problem
+    # Process each problem with batched runs
     for problem_idx, example in enumerate(dataset):
         problem_id = example.get("id", problem_idx)
         problem_text = example.get("problem", "")
@@ -265,33 +261,34 @@ def run_aime24_benchmark(
             print(f"Problem: {problem_text[:200]}..." if len(problem_text) > 200 else f"Problem: {problem_text}")
             print(f"Ground truth: {ground_truth}")
 
-        # Multiple runs for this problem
-        attempts = []
+        # Format prompt (same for all runs of this problem)
+        prompt_text = format_prompt_aime(problem_text, include_instruction=True)
+        messages = [{"role": "user", "content": prompt_text}]
+        formatted_prompt = tokenizer.apply_chat_template(
+            messages,
+            add_generation_prompt=True,
+            tokenize=False
+        )
 
-        for run_idx in range(num_runs):
-            try:
-                # Format prompt
-                prompt_text = format_prompt_aime(problem_text, include_instruction=True)
-                messages = [{"role": "user", "content": prompt_text}]
-                formatted_prompt = tokenizer.apply_chat_template(
-                    messages,
-                    add_generation_prompt=True,
-                    tokenize=False
-                )
+        # Batch all runs for this problem together
+        # Create a list of identical prompts (sampling will give different outputs)
+        batch_prompts = [formatted_prompt] * num_runs
 
-                # Generate
-                gen_start = time.time()
-                outputs = llm.generate_streaming(
-                    [formatted_prompt],
-                    sampling_params,
-                    max_active=256,
-                    use_tqdm=False
-                )
-                gen_time = time.time() - gen_start
-                total_gen_time += gen_time
+        try:
+            # Generate all runs in a single batch
+            batch_gen_start = time.time()
+            batch_outputs = llm.generate_streaming(
+                batch_prompts,
+                sampling_params,
+                max_active=256,
+                use_tqdm=False
+            )
+            batch_gen_time = time.time() - batch_gen_start
+            total_gen_time += batch_gen_time
 
-                # Extract output
-                output = outputs[0]
+            # Process each run's output
+            attempts = []
+            for run_idx, output in enumerate(batch_outputs):
                 output_text = output['text']
                 cleaned_text = output_text.replace('<|MASK|>', '')
 
@@ -301,13 +298,14 @@ def run_aime24_benchmark(
                 # Evaluate
                 is_correct = evaluate_answer_aime(predicted_answer, ground_truth)
 
-                # Calculate token metrics
+                # Calculate token metrics (approximate per-run time)
                 output_len = len(tokenizer.encode(output_text))
-                tokens_per_sec = output_len / gen_time if gen_time > 0 else 0
+                approx_run_time = batch_gen_time / num_runs
+                tokens_per_sec = output_len / approx_run_time if approx_run_time > 0 else 0
 
                 if verbose:
                     print(f"\n  Run {run_idx + 1}/{num_runs}:")
-                    print(f"    Generated ({output_len} tokens in {gen_time:.2f}s = {tokens_per_sec:.1f} tok/s)")
+                    print(f"    Generated ({output_len} tokens)")
                     print(f"    Predicted: {predicted_answer}")
                     print(f"    Correct: {'✓' if is_correct else '✗'}")
 
@@ -317,27 +315,31 @@ def run_aime24_benchmark(
                     "predicted_answer": predicted_answer,
                     "correct": is_correct,
                     "generated_text": cleaned_text,
-                    "generation_time_seconds": gen_time,
+                    "generation_time_seconds": approx_run_time,
                     "tokens_per_second": tokens_per_sec,
                     "output_tokens": output_len,
                 }
                 attempts.append(attempt)
 
-                pbar.update(1)
+            if verbose:
+                print(f"\n  Batch generation time: {batch_gen_time:.2f}s for {num_runs} runs")
+                print(f"  Average per run: {batch_gen_time / num_runs:.2f}s")
 
-            except Exception as e:
-                print(f"\n  ✗ Error on run {run_idx}: {e}")
-                import traceback
-                if verbose:
-                    traceback.print_exc()
+        except Exception as e:
+            print(f"\n  ✗ Error generating batch for problem {problem_idx}: {e}")
+            import traceback
+            if verbose:
+                traceback.print_exc()
 
+            # Create failed attempts
+            attempts = []
+            for run_idx in range(num_runs):
                 attempts.append({
                     "run_number": run_idx,
                     "predicted_answer": None,
                     "correct": False,
                     "error": str(e),
                 })
-                pbar.update(1)
 
         # Store problem result
         problem_result = {
@@ -350,6 +352,8 @@ def run_aime24_benchmark(
             "passes_at_32": any(a.get('correct', False) for a in attempts[:32]),
         }
         problem_results.append(problem_result)
+
+        pbar.update(1)
 
     pbar.close()
 
