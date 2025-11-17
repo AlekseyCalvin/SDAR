@@ -270,60 +270,75 @@ def run_aime24_benchmark(
             tokenize=False
         )
 
-        # Batch all runs for this problem together
-        # Create a list of identical prompts (sampling will give different outputs)
-        batch_prompts = [formatted_prompt] * num_runs
+        # Process runs in batches to avoid memory issues with large num_runs
+        # Batch size of 16 balances throughput and memory usage
+        batch_size = 16
+        attempts = []
+        total_problem_time = 0.0
 
         try:
-            # Generate all runs in a single batch
-            batch_gen_start = time.time()
-            batch_outputs = llm.generate_streaming(
-                batch_prompts,
-                sampling_params,
-                max_active=256,
-                use_tqdm=False
-            )
-            batch_gen_time = time.time() - batch_gen_start
-            total_gen_time += batch_gen_time
+            # Process runs in batches
+            for batch_start in range(0, num_runs, batch_size):
+                batch_end = min(batch_start + batch_size, num_runs)
+                current_batch_size = batch_end - batch_start
 
-            # Process each run's output
-            attempts = []
-            for run_idx, output in enumerate(batch_outputs):
-                output_text = output['text']
-                cleaned_text = output_text.replace('<|MASK|>', '')
+                # Create batch of identical prompts (sampling will give different outputs)
+                batch_prompts = [formatted_prompt] * current_batch_size
 
-                # Extract answer (integer 0-999)
-                predicted_answer = extract_answer_aime(cleaned_text)
+                # Generate batch
+                batch_gen_start = time.time()
+                batch_outputs = llm.generate_streaming(
+                    batch_prompts,
+                    sampling_params,
+                    max_active=256,
+                    use_tqdm=False
+                )
+                batch_gen_time = time.time() - batch_gen_start
+                total_problem_time += batch_gen_time
 
-                # Evaluate
-                is_correct = evaluate_answer_aime(predicted_answer, ground_truth)
+                # Process each run's output in this batch
+                for batch_idx, output in enumerate(batch_outputs):
+                    run_idx = batch_start + batch_idx
+                    output_text = output['text']
+                    cleaned_text = output_text.replace('<|MASK|>', '')
 
-                # Calculate token metrics (approximate per-run time)
-                output_len = len(tokenizer.encode(output_text))
-                approx_run_time = batch_gen_time / num_runs
-                tokens_per_sec = output_len / approx_run_time if approx_run_time > 0 else 0
+                    # Extract answer (integer 0-999)
+                    predicted_answer = extract_answer_aime(cleaned_text)
+
+                    # Evaluate
+                    is_correct = evaluate_answer_aime(predicted_answer, ground_truth)
+
+                    # Calculate token metrics (approximate per-run time)
+                    output_len = len(tokenizer.encode(output_text))
+                    approx_run_time = batch_gen_time / current_batch_size
+                    tokens_per_sec = output_len / approx_run_time if approx_run_time > 0 else 0
+
+                    if verbose:
+                        print(f"\n  Run {run_idx + 1}/{num_runs}:")
+                        print(f"    Generated ({output_len} tokens)")
+                        print(f"    Predicted: {predicted_answer}")
+                        print(f"    Correct: {'✓' if is_correct else '✗'}")
+
+                    # Store attempt
+                    attempt = {
+                        "run_number": run_idx,
+                        "predicted_answer": predicted_answer,
+                        "correct": is_correct,
+                        "generated_text": cleaned_text,
+                        "generation_time_seconds": approx_run_time,
+                        "tokens_per_second": tokens_per_sec,
+                        "output_tokens": output_len,
+                    }
+                    attempts.append(attempt)
 
                 if verbose:
-                    print(f"\n  Run {run_idx + 1}/{num_runs}:")
-                    print(f"    Generated ({output_len} tokens)")
-                    print(f"    Predicted: {predicted_answer}")
-                    print(f"    Correct: {'✓' if is_correct else '✗'}")
+                    print(f"\n  Batch {batch_start // batch_size + 1} generation time: {batch_gen_time:.2f}s for {current_batch_size} runs")
 
-                # Store attempt
-                attempt = {
-                    "run_number": run_idx,
-                    "predicted_answer": predicted_answer,
-                    "correct": is_correct,
-                    "generated_text": cleaned_text,
-                    "generation_time_seconds": approx_run_time,
-                    "tokens_per_second": tokens_per_sec,
-                    "output_tokens": output_len,
-                }
-                attempts.append(attempt)
+            total_gen_time += total_problem_time
 
             if verbose:
-                print(f"\n  Batch generation time: {batch_gen_time:.2f}s for {num_runs} runs")
-                print(f"  Average per run: {batch_gen_time / num_runs:.2f}s")
+                print(f"\n  Total problem time: {total_problem_time:.2f}s for {num_runs} runs")
+                print(f"  Average per run: {total_problem_time / num_runs:.2f}s")
 
         except Exception as e:
             print(f"\n  ✗ Error generating batch for problem {problem_idx}: {e}")
