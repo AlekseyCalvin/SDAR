@@ -43,6 +43,7 @@ htmlcov/
 .coverage
 .coverage.*
 .cache
+.claude
 nosetests.xml
 coverage.xml
 *.cover
@@ -179,3 +180,15 @@ generated_predictions.jsonl
 predictions_score.json
 *safetensors
 logs/
+
+# Benchmark results
+gsm8k_results.json
+gsm8k_jetengine_results.json
+*_results.json
+downloaded_results.json
+downloaded_results_*.json
+results_analysis.json
+wrong_answers*.json
+wrong_answers*.md
+benchmark_output/
+results/
