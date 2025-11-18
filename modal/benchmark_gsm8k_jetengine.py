@@ -60,7 +60,7 @@ image = (
         "pip install /root/JetEngine",
     )
     # 7) Your local helper file (added last for fast redeployment without rebuild)
-    .add_local_file("benchmark_utils.py", remote_path="/root/benchmark_utils.py")
+    .add_local_file("./modal/benchmark_utils.py", remote_path="/root/benchmark_utils.py")
 )
 
 # Volumes for caching models and storing results
