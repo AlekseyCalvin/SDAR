@@ -44,6 +44,7 @@ htmlcov/
 .coverage.*
 .cache
 .claude
+.gemini
 nosetests.xml
 coverage.xml
 *.cover
