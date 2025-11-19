@@ -1,6 +1,6 @@
-# CLAUDE.md
+# GEMINI.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to the Gemini coding assistant when working with code in this repository.
 
 ## Project Overview
 
@@ -15,7 +15,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Environment Setup
 
-**Training Environment (Full):**
+**Training Environment (Full, conda-based, not applicable to Colab):**
 ```bash
 conda env create -f training/llamafactory_full_env.yml
 conda activate llamafactory_sdar
@@ -108,7 +108,7 @@ outputs = pipe(prompts, gen_config=GenerationConfig(top_p=0.95, temperature=1.0)
 
 ### Training & Fine-tuning
 
-**Launch Training (Multi-GPU):**
+**Launch Training (Multi-GPU Example not applicable to a Colab-based single-GPU setup):**
 ```bash
 torchrun \
     --nnodes 1 \
@@ -158,8 +158,8 @@ Located in model directories (e.g., `training/model/SDAR-4B-Chat/`):
 
 **4. Modified LlamaFactory Framework**
 `training/llama_factory_sdar/` contains a customized version of LlamaFactory:
-- `src/llamafactory/train/`: Training workflows (pt, sft, dpo, kto, ppo, rm)
-- `src/llamafactory/data/`: SDAR-specific data processing with neat packing
+- `src/llamafactory/train/`: Training workflows (pt, sft, dpo, kto, ppo, rm), contains "trainer_utils.py" and "tuner.py" with further functional clarifications
+- `src/llamafactory/data/`: SDAR-specific data processing with neat packing, contains plethora of key .py scripts
 - `src/llamafactory/model/`: Model loading with custom file support
 - `src/llamafactory/chat/`: Inference engines
 - `examples/`: Training configuration templates
@@ -170,7 +170,7 @@ Located in model directories (e.g., `training/model/SDAR-4B-Chat/`):
 SDAR/
 ├── generate.py                     # Built-in inference script
 ├── training/
-│   ├── llamafactory_full_env.yml  # Complete conda environment
+│   ├── llamafactory_full_env.yml  # Complete conda environment with required dependencies
 │   ├── model/                     # Example model directories with custom files
 │   └── llama_factory_sdar/        # Modified LlamaFactory framework
 │       ├── src/
@@ -224,7 +224,7 @@ neat_packing: true             # CRITICAL: Required for Flex Attention
 truncate_mode: drop            # Recommended for shape consistency
 
 # Recommended settings
-cutoff_len: 20480             # Max sequence length
+cutoff_len: 2048             # Max sequence length
 preprocessing_num_workers: 96  # Parallel data processing
 template: qwen3               # Chat template format
 ```
@@ -262,32 +262,6 @@ From HuggingFace (JetLM organization):
 
 Multiple block size variants available (4, 8, 16, 32, 64).
 
-## Benchmarking
-
-### GSM8K Benchmark (Modal)
-
-Run GSM8K benchmarks on H100 GPUs using Modal:
-
-```bash
-# Activate virtual environment
-source venv/bin/activate
-
-# Run full test set
-modal run benchmark_gsm8k.py
-
-# Quick test
-modal run benchmark_gsm8k.py --num-samples 10
-
-# Custom configuration
-modal run benchmark_gsm8k.py --temperature 0.0 --verbose true
-```
-
-**Key Points:**
-- Script directly imports `block_diffusion_generate()` from `generate.py`
-- Verbose mode shows detailed generation logs
-- Results saved to JSON with accuracy and performance metrics
-- See `BENCHMARK_README.md` for full documentation
-
 ## Important Notes
 
 1. **This is research code** - SDAR is in "early experimental state"
@@ -296,4 +270,3 @@ modal run benchmark_gsm8k.py --temperature 0.0 --verbose true
 4. **Multiple inference engines available** - Use `generate.py` for testing, JetEngine/LMDeploy for production
 5. **Framework is modified LlamaFactory** - Not vanilla LlamaFactory; includes SDAR-specific modifications
 6. **Git submodule setup** - JetEngine requires `git submodule update --init --recursive`
-7. **Benchmark script uses generate.py** - The Modal benchmark imports generation functions directly from `generate.py` to ensure consistency
