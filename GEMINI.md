@@ -224,9 +224,19 @@ neat_packing: true             # CRITICAL: Required for Flex Attention
 truncate_mode: drop            # Recommended for shape consistency
 
 # Recommended settings
+dataset: lyrical_ru2eng_sft
 cutoff_len: 2048             # Max sequence length
 preprocessing_num_workers: 96  # Parallel data processing
 template: qwen3               # Chat template format
+gradient_checkpointing: true # to avoid OOM failure
+stage: sft
+do_train: true
+finetuning_type: lora
+output_dir: /content/drive/MyDrive/LyricalSDAR_4b
+report_to: wandb  # choices: [none, wandb, tensorboard, swanlab, mlflow]
+run_name: sdar_4b_lyrical
+per_device_train_batch_size: 1
+gradient_accumulation_steps: 4
 ```
 
 ### Remasking Strategies
