@@ -1,0 +1,58 @@
+### model
+model_name_or_path: ./training/model/SDAR-4B-Chat
+train_from_scratch: false
+trust_remote_code: true
+
+### method
+stage: sft
+do_train: true
+finetuning_type: lora
+freeze_vision_tower: true
+freeze_multi_modal_projector: false
+freeze_language_model: true
+deepspeed: /examples/deepspeed/ds_z2_offload_config.json
+# disable_gradient_checkpointing: true
+gradient_checkpointing: true
+
+### dataset
+dataset: lyrical_ru2eng_sft
+template: qwen3 # qwen2_vl
+block_length: 4
+cutoff_len: 2048
+truncate_mode: drop # choices: [drop, cut] 多模态推荐 drop
+overwrite_cache: false
+tokenized_path: /content/drive/MyDrive/LyricalSDAR_4b/cache
+preprocessing_num_workers: 96
+dataloader_num_workers: 4
+neat_packing: true
+# streaming: true
+# max_steps: 1000
+
+### output
+output_dir: /content/drive/MyDrive/LyricalSDAR_4b
+logging_steps: 5
+save_steps: 1000
+save_total_limit: 10
+plot_loss: true
+overwrite_output_dir: true
+save_only_model: false
+report_to: none  # choices: [none, wandb, tensorboard, swanlab, mlflow]
+
+### train
+run_name: sdar_4b_lyrical
+include_effective_tokens_per_second: true
+per_device_train_batch_size: 1
+gradient_accumulation_steps: 4
+learning_rate: 1.0e-5
+num_train_epochs: 10.0
+lr_scheduler_type: constant_with_warmup
+warmup_ratio: 0.03
+bf16: true
+ddp_timeout: 180000000
+resume_from_checkpoint: null
+
+### eval
+# val_size: 0.1
+# per_device_eval_batch_size: 1
+# eval_strategy: steps
+# eval_steps: 500
