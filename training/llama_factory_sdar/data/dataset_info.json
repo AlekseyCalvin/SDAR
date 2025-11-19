@@ -2,6 +2,22 @@
   "identity": {
     "file_name": "identity.json"
   },
+  "lyrical_v5_ru_en_dpo_orpo": {
+    "hf_hub_url": "AlekseyCalvin/Lyrical_v5_ru2en_DPO_ORPO_json",
+    "file_name": "Lyrical_v5_ru2en_dpo_orpo.json",
+    "ranking": true,
+    "columns": {
+      "prompt": "prompt",
+      "chosen": "chosen",
+      "rejected": "rejected"
+    },
+  "lyrical_ru2eng_sft": {
+    "hf_hub_url": "AlekseyCalvin/Lyrical_v5_ru2en_sft_json",
+    "columns": {
+      "prompt": "prompt",
+      "response": "completion"
+    }
+  },
   "alpaca_en_demo": {
     "file_name": "alpaca_en_demo.json"
   },
