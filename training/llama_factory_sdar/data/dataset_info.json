@@ -6,13 +6,16 @@
     "hf_hub_url": "AlekseyCalvin/Lyrical_v5_ru2en_DPO_ORPO_json",
     "file_name": "Lyrical_v5_ru2en_dpo_orpo.json",
     "ranking": true,
+    "formatting": "sharegpt",
     "columns": {
       "prompt": "prompt",
       "chosen": "chosen",
       "rejected": "rejected"
     },
   "lyrical_ru2eng_sft": {
-    "hf_hub_url": "AlekseyCalvin/Lyrical_v5_ru2en_sft_json",
+    "hf_hub_url": "AlekseyCalvin/Lyrical_Ru2En_Poems_Songs_MeterMatched_jsonl_SFT",
+    "file_name": "Lyrical_v5_SFT_1776rows.jsonl",
+    "formatting": "sharegpt",
     "columns": {
       "prompt": "prompt",
       "response": "completion"
