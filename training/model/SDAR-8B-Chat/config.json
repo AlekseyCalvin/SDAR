@@ -16,7 +16,7 @@
   "block_size": 4,
   "mask_token_id": 151669,
   "ep_size": 1,
-  "fuse_cross_entropy": true,
+  "fuse_cross_entropy": false,
   "head_dim": 128,
   "hidden_act": "silu",
   "hidden_size": 4096,
