@@ -11,6 +11,7 @@
       "prompt": "prompt",
       "chosen": "chosen",
       "rejected": "rejected"
+    }
     },
   "lyrical_ru2eng_sft": {
     "hf_hub_url": "AlekseyCalvin/Lyrical_Ru2En_Poems_Songs_MeterMatched_jsonl_SFT",
