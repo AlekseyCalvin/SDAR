@@ -13,6 +13,30 @@
       "rejected": "rejected"
     }
     },
+  "lyrical_v6_ru_en_dpo_instruction_csv": {
+    "hf_hub_url": "AlekseyCalvin/Lyrical_v6_ru2en_Poetry_MeterMatched_DPO_alpaca_gpt_Instruction",
+    "file_name": "Lyrical_v5.2_rus2eng_PoemsSongs_MeterMatched_ORPO_alpaca_gpt_Instruction.csv",
+    "ranking": true,
+    "formatting": "alpaca",
+    "columns": {
+    "prompt": "instruction",
+    "query": "input",
+    "chosen": "chosen",
+    "rejected": "rejected"
+    }
+    },
+  "lyrical_v6_ru_en_dpo_instruction_jsonl": {
+    "hf_hub_url": "AlekseyCalvin/Lyrical_v6_ru2en_Poetry_MeterMatched_DPO_Instruction_Jsonl",
+    "file_name": "Lyrical_v6_ru2en_dpo_Instruction.jsonl",
+    "ranking": true,
+    "formatting": "alpaca",
+    "columns": {
+    "prompt": "instruction",
+    "query": "input",
+    "chosen": "chosen",
+    "rejected": "rejected"
+    }
+    },
   "lyrical_ru2eng_sft": {
     "hf_hub_url": "AlekseyCalvin/Lyrical_Ru2En_Poems_Songs_MeterMatched_jsonl_SFT",
     "file_name": "Lyrical_v5_SFT_1776rows.jsonl",
